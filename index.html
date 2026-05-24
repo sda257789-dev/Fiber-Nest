@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nest Builder v0.2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;300;400;500&family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="site navigation">
+      <a href="#opening" data-nav-target="opening" data-i18n="nav.home">Home</a>
+      <a href="#builder" data-nav-target="builder" data-i18n="nav.craft">Craft</a>
+      <a href="#data" data-nav-target="data" data-i18n="nav.analysis" aria-disabled="true">Analysis</a>
+      <a href="#ending" data-nav-target="ending" data-i18n="nav.dashboard" aria-disabled="true">Dashboard</a>
+      <div class="language-switch" aria-label="language selector">
+        <button type="button" data-lang-option="zh" aria-pressed="true">简中</button>
+        <button type="button" data-lang-option="en" aria-pressed="false">EN</button>
+      </div>
+    </nav>
+    <main id="app">
+      <section id="opening" class="section section-opening" aria-label="opening animation">
+        <canvas id="opening-canvas"></canvas>
+        <div id="opening-guide" class="opening-guide" aria-live="polite"></div>
+        <div id="white-wipe" class="white-wipe"></div>
+        <button id="sound-toggle" class="sound-toggle" type="button" aria-label="start sound" data-i18n="sound.off">sound</button>
+      </section>
+
+      <section id="builder" class="section section-builder" aria-label="nest builder">
+        <aside class="chat-pane">
+          <header class="app-label">nest builder v0.2</header>
+          <div class="progress-panel">
+            <div class="progress-row">
+              <span data-i18n="progress.label">巢的完整度</span>
+              <span id="progress-value">0%</span>
+            </div>
+            <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+          </div>
+
+          <div class="stage-copy">
+            <p class="eyebrow" data-i18n="stage.eyebrow">MATERIAL WORKBENCH</p>
+            <h2 id="stage-title">自由搭建你的巢</h2>
+            <p id="stage-subtitle">Describe, generate, drag, weave.</p>
+            <p id="stage-description">先描述材料，让系统生成，再把它拖进右侧鸟巢里，自行搭建。拖满之后，可以继续旋转观察整个巢体。</p>
+          </div>
+
+          <div class="material-lab">
+            <label for="material-prompt" data-i18n="material.label">描述你想要的材料</label>
+            <textarea id="material-prompt" rows="4" data-i18n-placeholder="material.placeholder" placeholder="例如：像潮湿苔藓一样柔软，边缘有一点发亮，能缠住枝条又不容易断"></textarea>
+            <button id="generate-material" type="button" data-i18n="material.generate">Generate material</button>
+            <div id="generated-material" class="generated-material" draggable="true" hidden></div>
+          </div>
+
+          <section class="material-rack" aria-label="material rack">
+            <div class="rack-header">
+              <span data-i18n="rack.title">MATERIAL RACK</span>
+              <strong id="inventory-count">0 items</strong>
+            </div>
+            <div id="material-options" class="material-options"></div>
+          </section>
+
+          <section class="builder-hud" aria-label="builder status">
+            <div class="hud-card">
+              <span data-i18n="hud.viewTitle">360 VIEW</span>
+              <strong data-i18n="hud.viewStrong">拖动右侧鸟巢</strong>
+              <p data-i18n="hud.viewCopy">按住并旋转，近距离查看每一层材料如何叠压、缠绕、填满中心。</p>
+            </div>
+            <div class="hud-card">
+              <span data-i18n="hud.statusTitle">BUILD STATUS</span>
+              <strong id="build-status">等待第一种材料</strong>
+              <p id="build-status-detail">材料拖入后，会在巢体里真实堆积，不再只是一次性“选项选择”。</p>
+            </div>
+          </section>
+
+          <div class="preview-caption">
+            <span data-i18n="preview.title">PREVIEW</span>
+            <strong id="preview-name">尚未生成材料</strong>
+            <p id="preview-description">生成后可继续拖拽已生成的材料，也可以混用下方预设材料。</p>
+          </div>
+
+          <div id="builder-summary" class="builder-summary">
+            <p id="step-indicator" class="step-indicator">0 / 12 placed</p>
+            <div class="builder-actions" aria-label="builder navigation">
+              <button id="next-action" class="step-action secondary" type="button" data-i18n="actions.next">Next</button>
+              <button id="step-action" class="step-action" type="button">Finish</button>
+            </div>
+          </div>
+        </aside>
+
+        <div class="nest-pane">
+          <canvas id="nest-canvas"></canvas>
+          <div id="fill-arrow" class="fill-arrow" aria-hidden="true">↓</div>
+        </div>
+      </section>
+
+      <section id="data" class="section section-data" aria-label="data">
+        <div class="data-stack">
+          <header class="data-header">
+            <span data-i18n="data.eyebrow">BUILD OBSERVATORY</span>
+            <h2 data-i18n="data.title">你刚刚怎样把“判断”交给了材料和模型</h2>
+          </header>
+
+          <div class="usage-dashboard">
+            <article class="choice-log">
+              <header>
+                <span data-i18n="data.placed">PLACED MATERIALS</span>
+                <strong id="choice-count">0 / 12</strong>
+              </header>
+              <div id="choice-records" class="choice-records"></div>
+            </article>
+
+            <article class="usage-chart">
+              <header>
+                <span data-i18n="data.composition">NEST COMPOSITION</span>
+                <strong id="fiber-ratio-label">0% 光纤</strong>
+              </header>
+              <div class="chart-body">
+                <div id="fiber-ring" class="fiber-ring" style="--fiber-ratio: 0%">
+                  <span id="fiber-ring-value">0%</span>
+                  <small>fiber</small>
+                </div>
+                <div id="stage-bars" class="stage-bars"></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="langfuse-frame" aria-label="AI trace observability">
+            <div class="langfuse-shell">
+              <header class="langfuse-topbar">
+                <div class="langfuse-brand">
+                  <span>OBSERVABILITY</span>
+                  <strong>API Trace Canvas</strong>
+                </div>
+                <div class="langfuse-pills">
+                  <span class="langfuse-pill">Traces</span>
+                  <span class="langfuse-pill">Metrics</span>
+                  <span class="langfuse-pill">Sessions</span>
+                </div>
+              </header>
+
+              <div class="langfuse-overview">
+                <article class="trace-kpi-card">
+                  <span>Total Calls</span>
+                  <strong id="trace-total-calls">0</strong>
+                  <p data-i18n="trace.callsCopy">每生成一种材料，都会触发一次关于结构、风险和贴合方式的模型调用。</p>
+                </article>
+                <article class="trace-kpi-card">
+                  <span>Total Tokens</span>
+                  <strong id="trace-total-tokens">0</strong>
+                  <p data-i18n="trace.tokensCopy">语言被压缩成 token，判断被转化成输入与输出的成本。</p>
+                </article>
+                <article class="trace-kpi-card">
+                  <span>Total Latency</span>
+                  <strong id="trace-duration">0 ms</strong>
+                  <p data-i18n="trace.latencyCopy">你看见的是“很快”，但背后其实是完整的上下文拼接、推理与返回。</p>
+                </article>
+                <article class="trace-kpi-card">
+                  <span>Model</span>
+                  <strong id="trace-model">claude-sonnet-4-20250514</strong>
+                  <p id="trace-endpoint">https://api.anthropic.com/v1/messages</p>
+                </article>
+              </div>
+
+              <div class="trace-grid">
+                <article class="trace-panel trace-panel-main" id="trace-panel" aria-label="AI nest building trace">
+                  <header class="trace-header">
+                    <div>
+                      <span class="trace-kicker">Trace Graph</span>
+                      <h2>AI Nest Build Session</h2>
+                    </div>
+                    <div class="trace-id-block">
+                      <span>Trace ID</span>
+                      <strong id="trace-id">nest-session----</strong>
+                    </div>
+                  </header>
+                  <div class="trace-meta-strip">
+                    <div>
+                      <span>Session Start</span>
+                      <strong id="trace-start">--</strong>
+                    </div>
+                    <div>
+                      <span>Input Tokens</span>
+                      <strong id="trace-input-tokens">0</strong>
+                    </div>
+                    <div>
+                      <span>Output Tokens</span>
+                      <strong id="trace-output-tokens">0</strong>
+                    </div>
+                  </div>
+                  <div id="trace-timeline" class="trace-timeline" aria-live="polite"></div>
+                </article>
+
+                <aside class="trace-sidebar">
+                  <section class="trace-flow-card">
+                    <header>
+                      <span>PROCESS MAP</span>
+                      <strong data-i18n="trace.processTitle">让观众看见 API 在做什么</strong>
+                    </header>
+                    <ol id="trace-flow" class="trace-flow">
+                      <li data-i18n="trace.flow1">你输入一种材料想象</li>
+                      <li data-i18n="trace.flow2">前端把描述转成 prompt</li>
+                      <li data-i18n="trace.flow3">服务端把 prompt 发往模型 API</li>
+                      <li data-i18n="trace.flow4">模型返回材料解释、结构建议与巢体贴合方式</li>
+                      <li data-i18n="trace.flow5">结果被可视化成材料卡、轨迹记录与 3D 堆叠</li>
+                    </ol>
+                  </section>
+                  <section class="trace-flow-card">
+                    <header>
+                      <span>VIEWER NOTE</span>
+                      <strong data-i18n="trace.viewerTitle">你看到的不是“AI 自动完成”</strong>
+                    </header>
+                    <p id="player-summary" class="player-summary"></p>
+                    <p id="historical-record" class="historical-record"></p>
+                  </section>
+                </aside>
+              </div>
+            </div>
+          </div>
+          <div class="data-next-panel">
+            <span data-i18n="data.nextStage">NEXT STAGE</span>
+            <strong data-i18n="data.nextTitle">看见这个选择留下的后果</strong>
+            <button id="data-continue" type="button" data-i18n="actions.continue">Continue</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="ending" class="section section-ending" aria-label="ending">
+        <div class="watermark" aria-hidden="true">NEST</div>
+        <canvas id="ending-canvas"></canvas>
+        <div id="ending-message" class="ending-message"></div>
+        <nav class="ending-links">
+          <button id="about-open" type="button" data-i18n="ending.about">关于这件作品</button>
+        </nav>
+        <div id="about-layer" class="about-layer" hidden>
+          <button id="about-close" type="button" aria-label="close">×</button>
+          <p id="about-copy">刚才，你让AI替你做了xx。<br>鸟让光纤替它解决了筑巢的问题。<br>鸟不知道光纤会划破它的雏鸟。<br>它只知道这个材料很好用。<br>你知道AI在改变你的思考方式吗？<br>还是你也只是觉得，它很好用。</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>
